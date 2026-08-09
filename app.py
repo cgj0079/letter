@@ -5,7 +5,7 @@ from datetime import date
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / 'letters.db'
-HTML_FILE = 'index2.html'
+HTML_FILE = 'index.html'
 
 app = Flask(__name__, static_folder=str(BASE_DIR), static_url_path='')
 
