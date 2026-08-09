@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover"/>
+<title>누나에게</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600&family=Pretendard:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:rgba(253,249,241,0.93);
+  --paper-b:rgba(180,160,120,0.22);
+  --ink:#2C2416;--ink-l:#6B5B45;
+  --indigo-s:#4B5BA6;--indigo:#2A3878;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;margin:0;overflow:hidden;font-family:'Pretendard',sans-serif;}
+.serif{font-family:'Noto Serif KR',serif;}
+
+#bg{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;}
+
+/* ── Loading ── */
+#loading{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(7,9,20,1);
+  transition:opacity .8s ease;
+}
+#loading.hidden{opacity:0;pointer-events:none;}
+.spinner{
+  width:28px;height:28px;border:2px solid rgba(255,255,255,.15);
+  border-top-color:rgba(255,255,255,.6);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Viewer ── */
+#viewer{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;}
+
+.letter-paper{
+  background:var(--paper);backdrop-filter:blur(14px);
+  border:1px solid var(--paper-b);border-radius:3px;
+  box-shadow:0 10px 60px rgba(0,0,0,0.42),0 2px 10px rgba(0,0,0,0.18);
+  padding:2.5rem 2.8rem;max-width:560px;width:100%;
+  max-height:82vh;overflow-y:auto;position:relative;
+  scrollbar-width:thin;scrollbar-color:rgba(180,160,120,0.3) transparent;
+}
+.letter-paper::-webkit-scrollbar{width:4px;}
+.letter-paper::-webkit-scrollbar-thumb{background:rgba(180,160,120,0.3);border-radius:2px;}
+@media(max-width:480px){.letter-paper{padding:1.75rem 1.5rem;}}
+
+.lv-date{font-size:.75rem;color:var(--ink-l);text-align:right;margin-bottom:1.6rem;letter-spacing:.05em;}
+.lv-to{font-size:1rem;color:var(--ink);margin-bottom:1.2rem;font-weight:500;}
+.lv-body{font-size:.95rem;color:var(--ink);line-height:2.15;letter-spacing:.015em;white-space:pre-wrap;word-break:break-word;}
+.lv-from{margin-top:2rem;text-align:right;font-size:.875rem;color:var(--ink-l);}
+
+#empty{text-align:center;display:none;}
+#empty p{color:rgba(255,255,255,.48);line-height:2;}
+
+/* ── Author Overlay ── */
+#aov{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(0,0,0,.54);backdrop-filter:blur(5px);
+  display:none;align-items:center;justify-content:center;
+}
+#apanel{display:flex;width:100%;height:100%;max-width:920px;max-height:100%;}
+
+#list-pane{
+  width:250px;min-width:200px;
+  background:rgba(10,13,26,.97);
+  border-right:1px solid rgba(255,255,255,.07);
+  display:flex;flex-direction:column;padding:1.4rem 1rem;overflow:hidden;
+}
+#editor-pane{
+  flex:1;background:rgba(7,8,18,.98);
+  display:flex;flex-direction:column;padding:1.6rem 1.8rem;overflow:hidden;
+}
+@media(max-width:600px){
+  #apanel{flex-direction:column;}
+  #list-pane{width:100%;min-width:0;border-right:none;border-bottom:1px solid rgba(255,255,255,.07);max-height:38vh;}
+  #editor-pane{padding:1rem 1rem;}
+}
+
+.a-title{font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.28);margin-bottom:.9rem;}
+#letter-list{flex:1;overflow-y:auto;margin-bottom:.6rem;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent;}
+#letter-list::-webkit-scrollbar{width:3px;}
+#letter-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);}
+
+.li-item{padding:.55rem .7rem;border-radius:6px;cursor:pointer;margin-bottom:3px;transition:background .2s;}
+.li-item:hover{background:rgba(255,255,255,.06);}
+.li-item.sel{background:rgba(75,91,166,.28);}
+.li-date{font-size:.72rem;color:rgba(255,255,255,.72);}
+.li-prev{font-size:.67rem;color:rgba(255,255,255,.3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+#ed-date{
+  background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.72);font-size:.82rem;padding:.2rem .1rem;
+  outline:none;width:200px;
+}
+#ed-date::placeholder{color:rgba(255,255,255,.2);}
+
+#ed-area{
+  flex:1;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);border-radius:8px;
+  padding:1.1rem 1.25rem;color:rgba(255,255,255,.86);
+  font-family:'Noto Serif KR',serif;font-size:.93rem;line-height:2.1;
+  resize:none;outline:none;margin-top:.9rem;transition:border-color .2s;
+}
+#ed-area:focus{border-color:rgba(75,91,166,.55);}
+#ed-area::placeholder{color:rgba(255,255,255,.18);}
+
+#theme-sel{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.65);padding:.35rem .5rem;
+  border-radius:5px;font-size:.76rem;cursor:pointer;outline:none;
+}
+
+.btn-save{
+  background:linear-gradient(135deg,var(--indigo-s),var(--indigo));
+  border:1px solid rgba(244,239,228,.15);color:#fff;
+  padding:.55rem 1.25rem;border-radius:5px;font-size:.8rem;
+  cursor:pointer;transition:opacity .2s,box-shadow .2s;
+}
+.btn-save:hover{opacity:.9;box-shadow:0 0 14px rgba(75,91,166,.45);}
+.btn-del{
+  background:rgba(180,50,50,.12);border:1px solid rgba(180,50,50,.28);
+  color:rgba(240,90,90,.8);padding:.35rem .65rem;
+  border-radius:4px;font-size:.73rem;cursor:pointer;
+}
+.btn-new{
+  background:rgba(75,91,166,.18);border:1px solid rgba(75,91,166,.35);
+  color:rgba(170,182,255,.88);padding:.5rem .7rem;
+  border-radius:6px;font-size:.77rem;cursor:pointer;
+  transition:background .2s;text-align:center;
+}
+.btn-new:hover{background:rgba(75,91,166,.32);}
+.btn-x{background:none;border:none;color:rgba(255,255,255,.35);font-size:1.3rem;cursor:pointer;line-height:1;padding:0 .2rem;}
+.btn-x:hover{color:rgba(255,255,255,.7);}
+
+#char-cnt{font-size:.65rem;color:rgba(255,255,255,.2);text-align:right;margin-top:.4rem;}
+#save-status{font-size:.72rem;color:rgba(120,180,120,.8);text-align:right;min-height:1.1em;margin-top:.25rem;}
+
+.fi{animation:fi .7s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<!-- Loading -->
+<div id="loading"><div class="spinner"></div></div>
+
+<!-- VIEWER -->
+<div id="viewer">
+  <div id="letter-wrap" class="letter-paper fi" style="display:none;">
+    <div class="lv-date serif" id="lv-date"></div>
+    <div class="lv-to serif">❤️공주❤️에게,</div>
+    <div class="lv-body serif" id="lv-body"></div>
+    <div class="lv-from serif" id="lv-from"></div>
+  </div>
+  <div id="empty">
+    <p style="font-size:1.05rem;">아직 도착한 편지가 없어요.</p>
+    <p style="font-size:.8rem;margin-top:.4rem;opacity:.55;">곧 누군가 편지를 보내줄 거예요.</p>
+  </div>
+</div>
+
+<!-- AUTHOR OVERLAY -->
+<div id="aov">
+  <div id="apanel">
+    <div id="list-pane">
+      <div class="a-title">편지 보관함</div>
+      <div id="letter-list"></div>
+      <button class="btn-new" id="btn-new">＋ 새 편지 쓰기</button>
+    </div>
+    <div id="editor-pane">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.3rem;">
+        <div>
+          <div class="a-title" style="margin-bottom:.4rem;">편지 작성</div>
+          <input id="ed-date" placeholder="날짜" readonly/>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+          <select id="theme-sel"></select>
+          <button class="btn-del" id="btn-del" style="display:none;">삭제</button>
+          <button class="btn-save" id="btn-save">저장</button>
+          <button class="btn-x" id="btn-close">✕</button>
+        </div>
+      </div>
+      <textarea id="ed-area" placeholder="오늘 누나한테 하고 싶은 말을 써봐..."></textarea>
+      <div id="char-cnt">0자</div>
+      <div id="save-status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   STORAGE  (shared across all devices)
+══════════════════════════════════════════════ */
+const SKEY = 'letters-v1';
+const API_BASE = '';
+
+async function getLocalLetters() {
+  try {
+    return JSON.parse(localStorage.getItem(SKEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+async function setLocalLetters(ls) {
+  try {
+    localStorage.setItem(SKEY, JSON.stringify(ls));
+  } catch (e) {
+    console.error('Local storage write error:', e);
+  }
+}
+
+async function getLetters() {
+  try {
+    const res = await fetch(`${API_BASE}/api/letters`);
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.warn('API fetch failed, falling back to local storage.', e);
+    return getLocalLetters();
+  }
+}
+
+async function saveLetter(letter) {
+  const isUpdate = !!letter.id;
+  const url = isUpdate ? `${API_BASE}/api/letters/${letter.id}` : `${API_BASE}/api/letters`;
+  const method = isUpdate ? 'PUT' : 'POST';
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(letter),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+    return await res.json();
+  } catch (e) {
+    console.warn('API save failed, saving locally.', e);
+    const ls = await getLocalLetters();
+    if (isUpdate) {
+      const updated = ls.map(item => item.id === letter.id ? letter : item);
+      await setLocalLetters(updated);
+      return letter;
+    }
+    letter.id = Date.now();
+    ls.push(letter);
+    await setLocalLetters(ls);
+    return letter;
+  }
+}
+
+async function deleteLetter(letterId) {
+  try {
+    const res = await fetch(`${API_BASE}/api/letters/${letterId}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 404) {
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+  } catch (e) {
+    console.warn('API delete failed, deleting locally.', e);
+    const ls = await getLocalLetters();
+    await setLocalLetters(ls.filter(item => item.id !== letterId));
+  }
+}
+
+async function latestLetter() {
+  const ls = await getLetters();
+  return ls.sort((a,b) => b.dateRaw.localeCompare(a.dateRaw))[0] || null;
+}
+
+/* ══════════════════════════════════════════════
+   DATE UTILS
+══════════════════════════════════════════════ */
+function todayRaw() {
+  const d = new Date();
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+}
+function p2(n){ return String(n).padStart(2,'0'); }
+function fmtDate(raw) {
+  const [y,m,d] = raw.split('-').map(Number);
+  const day = ['일','월','화','수','목','금','토'][new Date(y,m-1,d).getDay()];
+  return `${y}년 ${m}월 ${d}일 ${day}요일`;
+}
+
+/* ══════════════════════════════════════════════
+   CANVAS + 9 ANIMATED BACKGROUNDS
+══════════════════════════════════════════════ */
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let W, H;
+let stars=[], clouds=[], particles=[];
+let ss={active:false,timer:0,x:0,y:0,vx:0,vy:0,life:0,len:0};
+
+const THEMES=[
+  {id:'night',  label:'🌌 밤하늘'},
+  {id:'ocean',  label:'🌊 바다'},
+  {id:'cherry', label:'🌸 벚꽃'},
+  {id:'cloud',  label:'☁️ 구름'},
+  {id:'sunset', label:'🌅 노을'},
+  {id:'rain',   label:'🌧️ 비'},
+  {id:'snow',   label:'❄️ 눈'},
+  {id:'aurora', label:'✨ 오로라'},
+  {id:'forest', label:'🌿 숲'},
+];
+let curTheme = 0;
+
+function r(a=1,b=0){ return Math.random()*a+b; }
+
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  initScene();
+}
+window.addEventListener('resize', resize);
+
+function initScene(){
+  const id = THEMES[curTheme].id;
+  stars=[]; clouds=[]; particles=[];
+  ss = {active:false,timer:0,x:0,y:0,vx:0,vy:0,life:0,len:0};
+
+  if(['night','ocean','sunset','aurora','snow'].includes(id)){
+    const n = Math.floor(W*H/(id==='aurora'?5500:8500));
+    for(let i=0;i<n;i++) stars.push({x:r(W),y:r(H),rr:r(1.2,.25),a:r(.5,.28),sp:r(.022,.005),ph:r(Math.PI*2)});
+  }
+  if(id==='cherry'){
+    for(let i=0;i<Math.floor(W*H/4800);i++) particles.push({
+      x:r(W),y:r(H)-H*.3,pr:r(5,2),vx:r(1,.1),vy:r(1.2,.4),
+      rot:r(Math.PI*2),rsp:r(.05,-.025),dr:r(Math.PI*2),dsp:r(.02,.005),
+      a:r(.5,.35),hue:r(20,340)
+    });
+  }
+  if(id==='rain'){
+    for(let i=0;i<Math.floor(W*H/1100);i++) particles.push({
+      x:r(W*1.5,-W*.2),y:r(H),len:r(16,8),sp:r(7,10),a:r(.28,.08),w:r(.5,.3)
+    });
+  }
+  if(id==='snow'){
+    for(let i=0;i<Math.floor(W*H/3600);i++) particles.push({
+      x:r(W),y:r(H),pr:r(3,1),vx:r(.4,-.2),vy:r(.8,.28),
+      dr:r(Math.PI*2),dsp:r(.01,.003),a:r(.5,.28)
+    });
+  }
+  if(id==='cloud'){
+    for(let i=0;i<8;i++) clouds.push({
+      x:r(W),y:r(H*.55,.04*H),w:r(200,110),h:r(70,38),sp:r(.25,.06),a:r(.55,.3)
+    });
+  }
+  if(id==='forest'){
+    for(let i=0;i<85;i++) particles.push({
+      x:r(W),y:r(H),pr:r(2,.5),a:r(.32,.1),vx:r(.2,-.1),vy:-(r(.15,.04))
+    });
+  }
+}
+
+/* helpers */
+function fill2(c0,c1,c2){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,c0);g.addColorStop(.55,c1);g.addColorStop(1,c2);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+function arc(x,y,rad,c){ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();}
+function rGrad(x,y,r0,r1,c0,c1){
+  const g=ctx.createRadialGradient(x,y,r0,x,y,r1);
+  g.addColorStop(0,c0);g.addColorStop(1,c1);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+
+/* ── NIGHT ── */
+function drawNight(t){
+  fill2('#070B1A','#0D1435','#151E45');
+  stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.3+.7;arc(s.x,s.y,s.rr,`rgba(225,230,248,${s.a*tw})`);});
+  ss.timer+=16;
+  if(!ss.active&&ss.timer>r(5000,3800)){
+    Object.assign(ss,{active:true,timer:0,x:r(W*.7,W*.07),y:r(H*.35),
+      vx:Math.cos(Math.PI/4+r(.3,-.15))*r(7,9),vy:Math.sin(Math.PI/4+r(.3,-.15))*r(7,9),
+      life:1,len:r(85,55)});
+  }
+  if(ss.active){
+    ss.x+=ss.vx;ss.y+=ss.vy;ss.life-=.013;
+    const tx=ss.x-ss.vx*(ss.len/10),ty=ss.y-ss.vy*(ss.len/10);
+    const lg=ctx.createLinearGradient(ss.x,ss.y,tx,ty);
+    lg.addColorStop(0,`rgba(255,255,255,${Math.max(ss.life,0)})`);
+    lg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.strokeStyle=lg;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(ss.x,ss.y);ctx.lineTo(tx,ty);ctx.stroke();
+    if(ss.life<=0||ss.y>H+60)ss.active=false;
+  }
+}
+
+/* ── OCEAN ── */
+function drawOcean(t){
+  fill2('#040B1E','#0B2040','#0A4A6E');
+  stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.25+.75;arc(s.x,s.y*0.46,s.rr,`rgba(220,228,248,${s.a*tw})`);});
+  const mx=W*.72,my=H*.16;
+  rGrad(mx,my,0,28,'rgba(255,248,220,.92)','rgba(255,248,220,.05)');
+  rGrad(mx,my,26,75,'rgba(255,248,220,.06)','rgba(255,248,220,0)');
+  for(let i=0;i<6;i++){
+    ctx.beginPath();ctx.ellipse(mx,H*.72+i*17,9+Math.sin(t*.001+i)*5,1.8,0,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,248,200,${.055-i*.008})`;ctx.fill();
+  }
+  [{y:.60,a:20,fr:.011,sp:.0009,c:'rgba(10,60,100,.72)'},{y:.70,a:14,fr:.017,sp:.0013,c:'rgba(8,50,88,.82)'},
+   {y:.80,a:9,fr:.024,sp:.0019,c:'rgba(6,38,70,.9)'},{y:.90,a:5,fr:.034,sp:.0026,c:'rgba(4,26,52,1)'}
+  ].forEach(w=>{
+    ctx.beginPath();ctx.moveTo(0,H);
+    for(let x=0;x<=W;x+=4) ctx.lineTo(x,H*w.y+Math.sin(x*w.fr+t*w.sp)*w.a+Math.sin(x*w.fr*1.7+t*w.sp*.6)*w.a*.4);
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=w.c;ctx.fill();
+  });
+}
+
+/* ── CHERRY ── */
+function drawCherry(t){
+  fill2('#1A0E28','#2E1535','#4A1E3A');
+  rGrad(W*.5,H*.05,0,H*.45,'rgba(255,170,195,.05)','rgba(0,0,0,0)');
+  particles.forEach(p=>{
+    p.y+=p.vy;p.x+=p.vx+Math.sin(p.dr)*.9;p.dr+=p.dsp;p.rot+=p.rsp;
+    if(p.y>H+20){p.y=-20;p.x=r(W);}
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+    ctx.beginPath();ctx.ellipse(0,0,p.pr,p.pr*.58,0,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${p.hue},68%,80%,${p.a})`;ctx.fill();ctx.restore();
+  });
+  ctx.fillStyle='rgba(14,6,14,.8)';
+  for(let i=0;i<5;i++){
+    const tx=W*(i*.22+.04),bw=16,bh=H*.32;
+    ctx.fillRect(tx,H-bh,bw,bh);
+    branch(tx+bw/2,H-bh,-Math.PI/2,H*.17,0);
+  }
+}
+function branch(x,y,a,len,d){
+  if(d>3||len<12)return;
+  const ex=x+Math.cos(a)*len,ey=y+Math.sin(a)*len;
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);
+  ctx.strokeStyle='rgba(14,6,14,.85)';ctx.lineWidth=Math.max(1,4-d);ctx.stroke();
+  branch(ex,ey,a-.44,len*.68,d+1);branch(ex,ey,a+.44,len*.68,d+1);
+}
+
+/* ── CLOUD ── */
+function drawCloud(t){
+  fill2('#A8D4F5','#C5E4F8','#E8F4FC');
+  rGrad(W*.68,H*.18,0,120,'rgba(255,245,150,1)','rgba(255,200,50,0)');
+  clouds.forEach(c=>{
+    c.x+=c.sp;if(c.x>W+c.w)c.x=-c.w;
+    cloudShape(c.x,c.y,c.w,c.h,c.a);
+  });
+  for(let i=0;i<4;i++){
+    const bx=(W*.12*i+t*.045)%W,by=H*(.2+i*.07);
+    ctx.strokeStyle='rgba(70,90,120,.35)';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(bx,by);ctx.quadraticCurveTo(bx+6,by-4,bx+12,by);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+12,by);ctx.quadraticCurveTo(bx+18,by-4,bx+24,by);ctx.stroke();
+  }
+}
+function cloudShape(x,y,w,h,a){
+  ctx.save();ctx.globalAlpha=a;ctx.fillStyle='rgba(255,255,255,.92)';
+  const rad=h/2;
+  [[0,0,.5,.62],[-.24,.22,.28,.56],[.22,.18,.3,.5],[.04,.44,.4,.4]].forEach(([ox,oy,rw,rh])=>{
+    ctx.beginPath();ctx.ellipse(x+ox*w,y+oy*rad*2,w*rw,rad*rh,0,0,Math.PI*2);ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* ── SUNSET ── */
+function drawSunset(t){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0D0A1E');g.addColorStop(.3,'#4A1530');g.addColorStop(.52,'#C24A20');
+  g.addColorStop(.7,'#E8802A');g.addColorStop(.84,'#F0B84A');g.addColorStop(1,'#1A0E28');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  rGrad(W/2,H*.73,0,H*.44,'rgba(255,240,150,.45)','rgba(0,0,0,0)');
+  ctx.save();ctx.globalAlpha=.036;
+  for(let i=0;i<14;i++){
+    const a=((i/14)*Math.PI-Math.PI/2)+Math.sin(t*.0003)*.04;
+    ctx.beginPath();ctx.moveTo(W/2,H*.73);
+    ctx.lineTo(W/2+Math.cos(a)*H,H*.73+Math.sin(a)*H);
+    ctx.lineTo(W/2+Math.cos(a+.07)*H,H*.73+Math.sin(a+.07)*H);
+    ctx.fillStyle='rgba(255,220,100,1)';ctx.fill();
+  }
+  ctx.restore();
+  stars.forEach(s=>{arc(s.x,s.y*.45,s.rr,`rgba(255,240,200,${s.a})`);});
+  ctx.fillStyle='rgba(8,4,14,.88)';
+  ctx.beginPath();ctx.moveTo(0,H);
+  for(let x=0;x<=W;x+=40) ctx.lineTo(x,H*(.82+Math.sin(x*.012)*.04+Math.sin(x*.007)*.05));
+  ctx.lineTo(W,H);ctx.closePath();ctx.fill();
+}
+
+/* ── RAIN ── */
+function drawRain(t){
+  fill2('#080C12','#10161E','#18222E');
+  particles.forEach(p=>{
+    p.y+=p.sp;p.x+=p.sp*.18;
+    if(p.y>H+20){p.y=-30;p.x=r(W*1.4,-W*.2);}
+    ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+p.len*.18,p.y+p.len);
+    ctx.strokeStyle=`rgba(155,190,225,${p.a})`;ctx.lineWidth=p.w;ctx.stroke();
+  });
+  for(let i=0;i<10;i++){
+    rGrad(W*(i*.1+.05),H*.68,0,26,`rgba(255,215,150,.056)`,'rgba(0,0,0,0)');
+  }
+  const cg=ctx.createLinearGradient(0,H*.6,0,H);
+  cg.addColorStop(0,'rgba(140,180,220,0)');cg.addColorStop(1,'rgba(140,180,220,.04)');
+  ctx.fillStyle=cg;ctx.fillRect(0,H*.6,W,H*.4);
+}
+
+/* ── SNOW ── */
+function drawSnow(t){
+  fill2('#06101E','#0E1828','#141E30');
+  stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.2+.8;arc(s.x,s.y,s.rr,`rgba(200,220,255,${s.a*tw})`);});
+  const mx=W*.28,my=H*.2;
+  rGrad(mx,my,0,24,'rgba(238,248,255,.9)','rgba(238,248,255,.06)');
+  rGrad(mx,my,22,62,'rgba(200,220,255,.05)','rgba(200,220,255,0)');
+  particles.forEach(p=>{
+    p.y+=p.vy;p.x+=p.vx+Math.sin(p.dr)*.5;p.dr+=p.dsp;
+    if(p.y>H+10){p.y=-10;p.x=r(W);}
+    if(p.x>W+10)p.x=-10;if(p.x<-10)p.x=W+10;
+    arc(p.x,p.y,p.pr,`rgba(215,232,255,${p.a})`);
+  });
+  const gg=ctx.createLinearGradient(0,H*.86,0,H);
+  gg.addColorStop(0,'rgba(190,210,235,0)');gg.addColorStop(1,'rgba(200,218,238,.1)');
+  ctx.fillStyle=gg;ctx.fillRect(0,H*.86,W,H*.14);
+}
+
+/* ── AURORA ── */
+function drawAurora(t){
+  fill2('#020809','#050E0C','#03080B');
+  stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.25+.75;arc(s.x,s.y,s.rr,`rgba(195,215,255,${s.a*tw})`);});
+  [{cy:.22,hue:150,wd:.19,amp:.09,fr:.006,sp:.00022},
+   {cy:.36,hue:180,wd:.13,amp:.06,fr:.009,sp:.00032},
+   {cy:.15,hue:120,wd:.1,amp:.05,fr:.007,sp:.0002},
+   {cy:.44,hue:265,wd:.09,amp:.04,fr:.011,sp:.00042}
+  ].forEach(b=>{
+    for(let y=H*(b.cy-b.wd);y<H*(b.cy+b.wd);y+=2){
+      const dist=Math.abs(y-H*b.cy)/(H*b.wd);
+      const al=Math.max(0,(1-dist*dist)*.2);
+      ctx.beginPath();ctx.moveTo(0,y);
+      for(let x=0;x<=W;x+=8) ctx.lineTo(x,y+Math.sin(x*b.fr+t*b.sp)*H*b.amp+Math.sin(x*b.fr*.5+t*b.sp*.65)*H*b.amp*.4);
+      ctx.strokeStyle=`hsla(${b.hue},88%,64%,${al})`;ctx.lineWidth=2;ctx.stroke();
+    }
+  });
+}
+
+/* ── FOREST ── */
+function drawForest(t){
+  fill2('#020A03','#061306','#040C04');
+  ctx.save();ctx.globalAlpha=.028;
+  for(let i=0;i<9;i++){
+    const lx=W*(i*.12+.06),lw=35+Math.sin(t*.0005+i)*12;
+    const lg=ctx.createLinearGradient(lx,0,lx,H*.9);
+    lg.addColorStop(0,'rgba(170,230,150,1)');lg.addColorStop(1,'rgba(170,230,150,0)');
+    ctx.fillStyle=lg;
+    ctx.beginPath();ctx.moveTo(lx-lw/2,0);ctx.lineTo(lx+lw/2,0);ctx.lineTo(lx+lw*.75,H*.9);ctx.lineTo(lx-lw*.75,H*.9);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+  particles.forEach(p=>{
+    p.y+=p.vy;p.x+=p.vx;
+    if(p.y<-10)p.y=H+10;if(p.x<-5)p.x=W+5;if(p.x>W+5)p.x=-5;
+    arc(p.x,p.y,p.pr,`rgba(175,240,155,${p.a})`);
+  });
+  ctx.fillStyle='rgba(2,6,2,.96)';
+  for(let i=0;i<7;i++){
+    const tx=W*(i/6),th=H*(.44+Math.sin(i*1.3)*.14),tw=28+Math.sin(i*.9)*14;
+    ctx.fillRect(tx-tw*.14,H-th*.38,tw*.28,th*.38);
+    [[0,-.56,.9,.44],[-.28,-.5,.6,.36],[.24,-.48,.55,.32]].forEach(([ox,oy,rw,rh])=>{
+      ctx.beginPath();ctx.ellipse(tx+ox*tw,H+oy*th,tw*rw,th*rh,0,0,Math.PI*2);ctx.fill();
+    });
+  }
+  const gg=ctx.createLinearGradient(0,H*.88,0,H);
+  gg.addColorStop(0,'rgba(5,14,4,0)');gg.addColorStop(1,'rgba(2,6,2,1)');
+  ctx.fillStyle=gg;ctx.fillRect(0,H*.88,W,H*.12);
+}
+
+/* ── Loop ── */
+function draw(t){
+  const id=THEMES[curTheme].id;
+  ({night:drawNight,ocean:drawOcean,cherry:drawCherry,cloud:drawCloud,
+    sunset:drawSunset,rain:drawRain,snow:drawSnow,aurora:drawAurora,forest:drawForest
+  })[id]?.(t);
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+/* ── Set theme (no dots in viewer) ── */
+function setTheme(i){
+  curTheme=i;stars=[];clouds=[];particles=[];
+  ss={active:false,timer:0,x:0,y:0,vx:0,vy:0,life:0,len:0};
+  initScene();
+  // update theme selector in author panel if open
+  const tSel=document.getElementById('theme-sel');
+  if(tSel)tSel.value=THEMES[i].id;
+}
+
+/* ══════════════════════════════════════════════
+   VIEWER
+══════════════════════════════════════════════ */
+async function renderViewer(){
+  const l = await latestLetter();
+  const wrap = document.getElementById('letter-wrap');
+  const empty = document.getElementById('empty');
+  if(!l){
+    wrap.style.display='none';
+    empty.style.display='block';
+    setTheme(Math.floor(Math.random()*THEMES.length));
+    return;
+  }
+  empty.style.display='none';
+  wrap.style.display='block';
+  wrap.classList.remove('fi');void wrap.offsetWidth;wrap.classList.add('fi');
+  document.getElementById('lv-date').textContent=fmtDate(l.dateRaw);
+  document.getElementById('lv-body').textContent=l.content;
+  const all = await getLetters();
+  document.getElementById('lv-from').textContent=`준이가 ✦  ${all.length}번째 편지`;
+  const ti=THEMES.findIndex(t=>t.id===l.theme);
+  setTheme(ti>=0?ti:Math.floor(Math.random()*THEMES.length));
+}
+
+/* ══════════════════════════════════════════════
+   AUTHOR PANEL
+══════════════════════════════════════════════ */
+const aov=document.getElementById('aov');
+const listEl=document.getElementById('letter-list');
+const edDate=document.getElementById('ed-date');
+const edArea=document.getElementById('ed-area');
+const tSel=document.getElementById('theme-sel');
+const btnDel=document.getElementById('btn-del');
+const charCnt=document.getElementById('char-cnt');
+const saveStatus=document.getElementById('save-status');
+
+THEMES.forEach(t=>{
+  const o=document.createElement('option');o.value=t.id;o.textContent=t.label;tSel.appendChild(o);
+});
+
+let editId=null;
+
+async function openAuthor(){
+  aov.style.display='flex';
+  await renderList();
+  newMode();
+}
+async function closeAuthor(){
+  aov.style.display='none';
+  await renderViewer();
+}
+
+async function renderList(){
+  const ls=(await getLetters()).sort((a,b)=>b.dateRaw.localeCompare(a.dateRaw));
+  listEl.innerHTML='';
+  if(!ls.length){
+    listEl.innerHTML='<p style="color:rgba(255,255,255,.2);font-size:.72rem;padding:.5rem;">아직 편지가 없어요.</p>';
+    return;
+  }
+  ls.forEach(l=>{
+    const div=document.createElement('div');
+    div.className='li-item'+(editId===l.id?' sel':'');
+    const prev=l.content.length>38?l.content.substring(0,38)+'...':l.content;
+    div.innerHTML=`<div class="li-date">${fmtDate(l.dateRaw)}</div><div class="li-prev">${prev}</div>`;
+    div.onclick=()=>loadLetter(l);
+    listEl.appendChild(div);
+  });
+}
+
+function loadLetter(l){
+  editId=l.id;
+  edDate.value=fmtDate(l.dateRaw);
+  edDate.dataset.raw=l.dateRaw;
+  edArea.value=l.content;
+  tSel.value=l.theme||THEMES[0].id;
+  btnDel.style.display='inline-block';
+  charCnt.textContent=l.content.length+'자';
+  saveStatus.textContent='';
+  renderList();
+  setTheme(THEMES.findIndex(t=>t.id===l.theme));
+}
+
+function newMode(){
+  editId=null;
+  const raw=todayRaw();
+  edDate.value=fmtDate(raw);
+  edDate.dataset.raw=raw;
+  edArea.value='';
+  tSel.value=THEMES[curTheme].id;
+  btnDel.style.display='none';
+  charCnt.textContent='0자';
+  saveStatus.textContent='';
+  renderList();
+  setTimeout(()=>edArea.focus(),50);
+}
+
+edArea.oninput=()=>{ charCnt.textContent=edArea.value.length+'자'; };
+tSel.onchange=()=>{ const ti=THEMES.findIndex(t=>t.id===tSel.value);if(ti>=0)setTheme(ti); };
+
+document.getElementById('btn-new').onclick=newMode;
+document.getElementById('btn-close').onclick=closeAuthor;
+
+document.getElementById('btn-save').onclick=async()=>{
+  const content=edArea.value.trim();
+  if(!content){alert('편지 내용을 써줘!');return;}
+  const raw=edDate.dataset.raw||todayRaw();
+  const theme=tSel.value;
+  const btn=document.getElementById('btn-save');
+  btn.textContent='저장 중...';btn.disabled=true;
+  try{
+    const payload = { id: editId, dateRaw: raw, theme, content };
+    const saved = await saveLetter(payload);
+    editId = saved.id;
+    saveStatus.textContent='✓ 저장됐어';
+    await renderList();
+  }catch(e){
+    saveStatus.textContent='저장에 실패했어. 다시 시도해봐.';
+    console.error(e);
+  }finally{
+    btn.textContent='저장';btn.disabled=false;
+    setTimeout(()=>saveStatus.textContent='',3000);
+  }
+};
+
+btnDel.onclick=async()=>{
+  if(!editId||!confirm('이 편지를 삭제할까요?'))return;
+  try{
+    await deleteLetter(editId);
+    newMode();
+  }catch(e){
+    console.error(e);
+    alert('삭제에 실패했어. 다시 시도해봐.');
+  }
+};
+
+/* ── Secret: Shift+W only ── */
+window.addEventListener('keydown',e=>{
+  if(e.key==='W'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){
+    aov.style.display==='flex'?closeAuthor():openAuthor();
+  }
+});
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+(async()=>{
+  resize();
+  await renderViewer();
+  // fade out loading screen
+  const loading=document.getElementById('loading');
+  loading.classList.add('hidden');
+  setTimeout(()=>loading.style.display='none',900);
+})();
+</script>
+</body>
+</html>
