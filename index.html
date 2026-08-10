@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover"/>
-<title>누나에게</title>
+<title>1일 1편지</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,7 +156,7 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:'Pretendard',sans-ser
 <div id="viewer">
   <div id="letter-wrap" class="letter-paper fi" style="display:none;">
     <div class="lv-date serif" id="lv-date"></div>
-    <div class="lv-to serif">1일 1편지,</div>
+    <div class="lv-to serif">❤️공주❤️에게,</div>
     <div class="lv-body serif" id="lv-body"></div>
     <div class="lv-from serif" id="lv-from"></div>
   </div>
@@ -377,7 +377,7 @@ async function renderViewer(){
   wrap.classList.remove('fi');void wrap.offsetWidth;wrap.classList.add('fi');
   document.getElementById('lv-date').textContent=fmtDate(latest.dateRaw);
   document.getElementById('lv-body').textContent=latest.content;
-  document.getElementById('lv-from').textContent=`Jun으로부터  ✦  ${letters.length}번째 편지`;
+  document.getElementById('lv-from').textContent=`준이가 ✦  ${letters.length}번째 편지`;
   const ti=THEMES.findIndex(t=>t.id===latest.theme);
   setTheme(ti>=0?ti:Math.floor(Math.random()*THEMES.length));
 }
