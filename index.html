@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover"/>
-<title>편지</title>
+<title>누나에게</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -197,9 +197,7 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:'Pretendard',sans-ser
 </div>
 
 <script>
-/* ══════════════════════════════════════════════
-   STORAGE  (shared across all devices)
-══════════════════════════════════════════════ */
+/* STORAGE */
 const SKEY = 'letters-v1';
 const API_BASE = '';
 
@@ -279,9 +277,7 @@ async function latestLetter() {
   return ls.sort((a,b) => b.dateRaw.localeCompare(a.dateRaw))[0] || null;
 }
 
-/* ══════════════════════════════════════════════
-   DATE UTILS
-══════════════════════════════════════════════ */
+/* DATE UTILS */
 function todayRaw() {
   const d = new Date();
   return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
@@ -293,9 +289,7 @@ function fmtDate(raw) {
   return `${y}년 ${m}월 ${d}일 ${day}요일`;
 }
 
-/* ══════════════════════════════════════════════
-   CANVAS + 9 ANIMATED BACKGROUNDS
-══════════════════════════════════════════════ */
+/* CANVAS & BACKGROUNDS */
 const canvas = document.getElementById('bg');
 const ctx = canvas.getContext('2d');
 let W, H;
@@ -363,7 +357,6 @@ function initScene(){
   }
 }
 
-/* helpers */
 function fill2(c0,c1,c2){
   const g=ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,c0);g.addColorStop(.55,c1);g.addColorStop(1,c2);
@@ -375,7 +368,6 @@ function rGrad(x,y,r0,r1,c0,c1){
   g.addColorStop(0,c0);g.addColorStop(1,c1);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 }
 
-/* ── NIGHT ── */
 function drawNight(t){
   fill2('#070B1A','#0D1435','#151E45');
   stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.3+.7;arc(s.x,s.y,s.rr,`rgba(225,230,248,${s.a*tw})`);});
@@ -397,7 +389,6 @@ function drawNight(t){
   }
 }
 
-/* ── OCEAN ── */
 function drawOcean(t){
   fill2('#040B1E','#0B2040','#0A4A6E');
   stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.25+.75;arc(s.x,s.y*0.46,s.rr,`rgba(220,228,248,${s.a*tw})`);});
@@ -417,7 +408,6 @@ function drawOcean(t){
   });
 }
 
-/* ── CHERRY ── */
 function drawCherry(t){
   fill2('#1A0E28','#2E1535','#4A1E3A');
   rGrad(W*.5,H*.05,0,H*.45,'rgba(255,170,195,.05)','rgba(0,0,0,0)');
@@ -443,7 +433,6 @@ function branch(x,y,a,len,d){
   branch(ex,ey,a-.44,len*.68,d+1);branch(ex,ey,a+.44,len*.68,d+1);
 }
 
-/* ── CLOUD ── */
 function drawCloud(t){
   fill2('#A8D4F5','#C5E4F8','#E8F4FC');
   rGrad(W*.68,H*.18,0,120,'rgba(255,245,150,1)','rgba(255,200,50,0)');
@@ -467,7 +456,6 @@ function cloudShape(x,y,w,h,a){
   ctx.restore();
 }
 
-/* ── SUNSET ── */
 function drawSunset(t){
   const g=ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#0D0A1E');g.addColorStop(.3,'#4A1530');g.addColorStop(.52,'#C24A20');
@@ -490,7 +478,6 @@ function drawSunset(t){
   ctx.lineTo(W,H);ctx.closePath();ctx.fill();
 }
 
-/* ── RAIN ── */
 function drawRain(t){
   fill2('#080C12','#10161E','#18222E');
   particles.forEach(p=>{
@@ -507,7 +494,6 @@ function drawRain(t){
   ctx.fillStyle=cg;ctx.fillRect(0,H*.6,W,H*.4);
 }
 
-/* ── SNOW ── */
 function drawSnow(t){
   fill2('#06101E','#0E1828','#141E30');
   stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.2+.8;arc(s.x,s.y,s.rr,`rgba(200,220,255,${s.a*tw})`);});
@@ -525,7 +511,6 @@ function drawSnow(t){
   ctx.fillStyle=gg;ctx.fillRect(0,H*.86,W,H*.14);
 }
 
-/* ── AURORA ── */
 function drawAurora(t){
   fill2('#020809','#050E0C','#03080B');
   stars.forEach(s=>{const tw=Math.sin(t*s.sp+s.ph)*.25+.75;arc(s.x,s.y,s.rr,`rgba(195,215,255,${s.a*tw})`);});
@@ -544,7 +529,6 @@ function drawAurora(t){
   });
 }
 
-/* ── FOREST ── */
 function drawForest(t){
   fill2('#020A03','#061306','#040C04');
   ctx.save();ctx.globalAlpha=.028;
@@ -574,7 +558,6 @@ function drawForest(t){
   ctx.fillStyle=gg;ctx.fillRect(0,H*.88,W,H*.12);
 }
 
-/* ── Loop ── */
 function draw(t){
   const id=THEMES[curTheme].id;
   ({night:drawNight,ocean:drawOcean,cherry:drawCherry,cloud:drawCloud,
@@ -584,19 +567,15 @@ function draw(t){
 }
 requestAnimationFrame(draw);
 
-/* ── Set theme (no dots in viewer) ── */
 function setTheme(i){
   curTheme=i;stars=[];clouds=[];particles=[];
   ss={active:false,timer:0,x:0,y:0,vx:0,vy:0,life:0,len:0};
   initScene();
-  // update theme selector in author panel if open
   const tSel=document.getElementById('theme-sel');
   if(tSel)tSel.value=THEMES[i].id;
 }
 
-/* ══════════════════════════════════════════════
-   VIEWER
-══════════════════════════════════════════════ */
+/* VIEWER */
 async function renderViewer(){
   const l = await latestLetter();
   const wrap = document.getElementById('letter-wrap');
@@ -618,9 +597,7 @@ async function renderViewer(){
   setTheme(ti>=0?ti:Math.floor(Math.random()*THEMES.length));
 }
 
-/* ══════════════════════════════════════════════
-   AUTHOR PANEL
-══════════════════════════════════════════════ */
+/* AUTHOR PANEL */
 const aov=document.getElementById('aov');
 const listEl=document.getElementById('letter-list');
 const edDate=document.getElementById('ed-date');
@@ -729,20 +706,17 @@ btnDel.onclick=async()=>{
   }
 };
 
-/* ── Secret: Shift+W only ── */
+/* Secret Key: Shift+W */
 window.addEventListener('keydown',e=>{
   if(e.key==='W'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey){
     aov.style.display==='flex'?closeAuthor():openAuthor();
   }
 });
 
-/* ══════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════ */
+/* INIT */
 (async()=>{
   resize();
   await renderViewer();
-  // fade out loading screen
   const loading=document.getElementById('loading');
   loading.classList.add('hidden');
   setTimeout(()=>loading.style.display='none',900);
