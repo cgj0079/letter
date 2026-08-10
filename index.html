@@ -49,6 +49,10 @@ html,body{height:100%;margin:0;overflow:hidden;font-family:'Pretendard',sans-ser
 .lv-body{font-size:.95rem;color:var(--ink);line-height:2.15;letter-spacing:.015em;white-space:pre-wrap;word-break:break-word;}
 .lv-from{margin-top:2rem;text-align:right;font-size:.875rem;color:var(--ink-l);}
 
+/* ── 뷰어 드래그/선택 방지 ── */
+#viewer{user-select:none;-webkit-user-select:none;-ms-user-select:none;}
+#viewer *{user-select:none;-webkit-user-select:none;-ms-user-select:none;}
+
 #empty{text-align:center;display:none;}
 #empty p{color:rgba(255,255,255,.46);line-height:2;}
 
