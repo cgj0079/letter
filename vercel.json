@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/letters.js": {
+      "maxDuration": 10
+    }
+  }
+}
